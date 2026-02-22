@@ -1,1 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>PayTracker</title>
+    <style>
+        body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
+        .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #111; margin-top: 0; }
+        label { font-size: 14px; color: #666; font-weight: 600; display: block; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: 0.2s; }
+        .btn-calc { background: #007aff; color: white; margin-bottom: 10px; }
+        .btn-undo { background: #ff9500; color: white; display: none; margin-bottom: 20px; }
+        .btn-add { background: #34c759; color: white; }
+        .btn-reset { background: none; color: #ff3b30; text-decoration: underline; font-size: 13px; margin-top: 30px; }
+        
+        .results { background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #007aff; }
+        .totals { background: #e8f4fd; padding: 20px; border-radius: 12px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
+        .highlight { color: #d9534f; font-weight: 800; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; }
+        .adj-section { margin-top: 25px; padding-top: 20px; border-top: 1px dashed #ccc; }
+    </style>
+</head>
+<body>
 
+<div class="card">
+    <h2>PayTracker</h2>
+    
+    <label>Bi-Weekly Take-Home Pay:</label>
+    <input type="number" id="payInput" placeholder="$0.00" inputmode="decimal">
+    <button class="btn-calc" onclick="calculate()">Calculate & Save</button>
+    <button id="undoBtn" class="btn-undo" onclick="undoLast()">Undo Last Entry</button>
+
+    <div id="breakdownArea" class="results" style="display:none;">
+        <strong>This Check:</strong>
+        <div class="row" style="margin-top:10px;"><span>Tax/CPP/EI (36%):</span> <span id="curTax"></span></div>
+        <div class="row"><span>Investments (4%):</span> <span id="curInv"></span></div>
+        <div class="row"><span>Vacation (4%):</span> <span id="curVac"></span></div>
+        <div class="row highlight"><span>Total Deductions (44%):</span> <span id="curTotal"></span></div>
+    </div>
+
+    <div class="totals">
+        <div class="row"><strong>Year-to-Date Totals</strong></div>
+        <div class="row"><span>Tax/CPP/EI:</span> <strong id="totTax"></strong></div>
+        <div class="row"><span>Investments:</span> <strong id="totInv"></strong></div>
+        <div class="row"><span>Vacation:</span> <strong id="totVac"></strong></div>
+    </div>
+
+    <div class="adj-section">
+        <label>Manual Adjustment:</label>
+        <select id="adjCat">
+            <option value="tax">Tax Bucket</option>
+            <option value="invest">Investments</option>
+            <option value="vacation">Vacation</option>
+        </select>
+        <input type="number" id="adjAmt" placeholder="Amount to add/subtract" inputmode="decimal">
+        <button class="btn-add" onclick="addManual()">Adjust Total</button>
+    </div>
+
+    <button class="btn-reset" onclick="resetAll()">Reset All Data</button>
+</div>
+
+<script>
+    // Load data
+    let data = JSON.parse(localStorage.getItem('payData')) || { tax: 0, invest: 0, vacation: 0 };
+    let lastEntry = null;
+
+    updateUI();
+
+    function calculate() {
+        const pay = parseFloat(document.getElementById('payInput').value);
+        if (isNaN(pay) || pay <= 0) return;
+
+        // Math
+        const t = pay * 0.36;
+        const i = pay * 0.04;
+        const v = pay * 0.04;
+        
+        // Save for undo
+        lastEntry = { t, i, v };
+        
+        // Update totals
+        data.tax += t;
+        data.invest += i;
+        data.vacation += v;
+
+        // Show breakdown
+        document.getElementById('curTax').innerText = format(t);
+        document.getElementById('curInv').innerText = format(i);
+        document.getElementById('curVac').innerText = format(v);
+        document.getElementById('curTotal').innerText = format(t + i + v);
+        
+        document.getElementById('breakdownArea').style.display = 'block';
+        document.getElementById('undoBtn').style.display = 'block';
+        document.getElementById('payInput').value = '';
+
+        save();
+    }
+
+    function undoLast() {
+        if (!lastEntry) return;
+        data.tax -= lastEntry.t;
+        data.invest -= lastEntry.i;
+        data.vacation -= lastEntry.v;
+        
+        lastEntry = null;
+        document.getElementById('undoBtn').style.display = 'none';
+        document.getElementById('breakdownArea').style.display = 'none';
+        
+        save();
+        alert("Last entry undone.");
+    }
+
+    function addManual() {
+        const amt = parseFloat(document.getElementById('adjAmt').value);
+        const cat = document.getElementById('adjCat').value;
+        if (isNaN(amt)) return;
+
+        data[cat === 'tax' ? 'tax' : cat === 'invest' ? 'invest' : 'vacation'] += amt;
+        lastEntry = null; // Can't undo manual adjustments easily
+        document.getElementById('undoBtn').style.display = 'none';
+        document.getElementById('adjAmt').value = '';
+        save();
+    }
+
+    function save() {
+        localStorage.setItem('payData', JSON.stringify(data));
+        updateUI();
+    }
+
+    function updateUI() {
+        document.getElementById('totTax').innerText = format(data.tax);
+        document.getElementById('totInv').innerText = format(data.invest);
+        document.getElementById('totVac').innerText = format(data.vacation);
+    }
+
+    function format(num) {
+        return "$" + num.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+
+    function resetAll() {
+        if (confirm("This will wipe all year-to-date totals. Proceed?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+</script>
+
+</body>
+</html>
