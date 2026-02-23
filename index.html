@@ -30,6 +30,7 @@
         .history-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; }
         .history-list { font-size: 13px; color: #444; max-height: 150px; overflow-y: auto; }
         .history-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #fafafa; }
+        .adj-log-text { color: #666; font-style: italic; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -98,13 +99,13 @@
         const v = pay * 0.036;
         
         const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        lastEntryMemory = { t, i, v };
+        lastEntryMemory = { type: 'pay', t, i, v };
 
         data.tax += t;
         data.invest += i;
         data.vacation += v;
         data.lastUpdate = now;
-        data.history.unshift({ date: now, amount: pay });
+        data.history.unshift({ date: now, amount: pay, isAdj: false });
 
         document.getElementById('curTax').innerText = format(t);
         document.getElementById('curInv').innerText = format(i);
@@ -120,9 +121,15 @@
 
     function undoLast() {
         if (!lastEntryMemory) return;
-        data.tax -= lastEntryMemory.t;
-        data.invest -= lastEntryMemory.i;
-        data.vacation -= lastEntryMemory.v;
+        
+        if (lastEntryMemory.type === 'pay') {
+            data.tax -= lastEntryMemory.t;
+            data.invest -= lastEntryMemory.i;
+            data.vacation -= lastEntryMemory.v;
+        } else {
+            data[lastEntryMemory.cat] -= lastEntryMemory.amt;
+        }
+        
         data.history.shift();
         lastEntryMemory = null;
         document.getElementById('undoBtn').style.display = 'none';
@@ -135,16 +142,28 @@
         let amt = parseFloat(document.getElementById('adjAmt').value);
         const cat = document.getElementById('adjCat').value;
         const type = document.getElementById('adjType').value;
+        const catName = document.getElementById('adjCat').options[document.getElementById('adjCat').selectedIndex].text;
         
         if (isNaN(amt)) return;
+        if (type === 'minus') amt = -Math.abs(amt);
 
-        if (type === 'minus') {
-            amt = -Math.abs(amt);
-        }
+        const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        // Memory for Undo (Manual adjustments can now be undone too!)
+        lastEntryMemory = { type: 'adj', cat: cat, amt: amt };
 
         data[cat] += amt;
-        lastEntryMemory = null; 
-        document.getElementById('undoBtn').style.display = 'none';
+        data.lastUpdate = now;
+        
+        // Log it as an adjustment
+        data.history.unshift({ 
+            date: now, 
+            amount: amt, 
+            isAdj: true, 
+            catLabel: catName 
+        });
+
+        document.getElementById('undoBtn').style.display = 'block';
         document.getElementById('adjAmt').value = '';
         save();
     }
@@ -162,10 +181,15 @@
 
         const listDiv = document.getElementById('historyList');
         listDiv.innerHTML = '';
-        data.history.slice(0, 10).forEach(item => {
+        data.history.slice(0, 15).forEach(item => {
             const div = document.createElement('div');
             div.className = 'history-item';
-            div.innerHTML = `<span>${item.date}</span> <strong>${format(item.amount)}</strong>`;
+            if (item.isAdj) {
+                const sign = item.amount >= 0 ? '+' : '';
+                div.innerHTML = `<span>${item.date}</span> <span class="adj-log-text">Adj: ${item.catLabel} ${sign}${format(item.amount)}</span>`;
+            } else {
+                div.innerHTML = `<span>${item.date}</span> <strong>${format(item.amount)}</strong>`;
+            }
             listDiv.appendChild(div);
         });
     }
