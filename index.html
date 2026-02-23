@@ -44,8 +44,8 @@
     <div id="breakdownArea" class="results" style="display:none;">
         <strong>This Check:</strong>
         <div class="row" style="margin-top:10px;"><span>Tax/CPP/EI (36%):</span> <span id="curTax"></span></div>
-        <div class="row"><span>Investments (4%):</span> <span id="curInv"></span></div>
-        <div class="row"><span>Vacation (4%):</span> <span id="curVac"></span></div>
+        <div class="row"><span>Investments (4.5%):</span> <span id="curInv"></span></div>
+        <div class="row"><span>Vacation (3.5%):</span> <span id="curVac"></span></div>
         <div class="row highlight"><span>Total Deductions (44%):</span> <span id="curTotal"></span></div>
     </div>
 
@@ -59,8 +59,7 @@
 
     <div class="history-section">
         <label>Entry History:</label>
-        <div id="historyList" class="history-list">
-            </div>
+        <div id="historyList" class="history-list"></div>
     </div>
 
     <div class="adj-section">
@@ -70,7 +69,7 @@
             <option value="invest">Investments</option>
             <option value="vacation">Vacation</option>
         </select>
-        <input type="number" id="adjAmt" placeholder="Amount to add/subtract" inputmode="decimal">
+        <input type="number" id="adjAmt" placeholder="Amount" inputmode="decimal">
         <button class="btn-add" onclick="addManual()">Adjust Total</button>
     </div>
 
@@ -78,7 +77,6 @@
 </div>
 
 <script>
-    // Load data from LocalStorage
     let data = JSON.parse(localStorage.getItem('payData')) || { tax: 0, invest: 0, vacation: 0, lastUpdate: 'Never', history: [] };
     let lastEntryMemory = null;
 
@@ -88,24 +86,20 @@
         const pay = parseFloat(document.getElementById('payInput').value);
         if (isNaN(pay) || pay <= 0) return;
 
+        // UPDATED RATIOS
         const t = pay * 0.36;
-        const i = pay * 0.04;
-        const v = pay * 0.04;
+        const i = pay * 0.045;
+        const v = pay * 0.035;
         
-        // Timestamp
         const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
-        // Memory for Undo
         lastEntryMemory = { t, i, v };
 
-        // Update data object
         data.tax += t;
         data.invest += i;
         data.vacation += v;
         data.lastUpdate = now;
-        data.history.unshift({ date: now, amount: pay }); // Add to start of list
+        data.history.unshift({ date: now, amount: pay });
 
-        // Show "This Check" result
         document.getElementById('curTax').innerText = format(t);
         document.getElementById('curInv').innerText = format(i);
         document.getElementById('curVac').innerText = format(v);
@@ -123,22 +117,17 @@
         data.tax -= lastEntryMemory.t;
         data.invest -= lastEntryMemory.i;
         data.vacation -= lastEntryMemory.v;
-        
-        data.history.shift(); // Remove most recent history item
+        data.history.shift();
         lastEntryMemory = null;
-        
         document.getElementById('undoBtn').style.display = 'none';
         document.getElementById('breakdownArea').style.display = 'none';
-        
         save();
-        alert("Last entry undone.");
     }
 
     function addManual() {
         const amt = parseFloat(document.getElementById('adjAmt').value);
         const cat = document.getElementById('adjCat').value;
         if (isNaN(amt)) return;
-
         data[cat] += amt;
         lastEntryMemory = null; 
         document.getElementById('undoBtn').style.display = 'none';
@@ -157,10 +146,9 @@
         document.getElementById('totVac').innerText = format(data.vacation);
         document.getElementById('lastDate').innerText = data.lastUpdate;
 
-        // Update History List
         const listDiv = document.getElementById('historyList');
         listDiv.innerHTML = '';
-        data.history.slice(0, 10).forEach(item => { // Show last 10 entries
+        data.history.slice(0, 10).forEach(item => {
             const div = document.createElement('div');
             div.className = 'history-item';
             div.innerHTML = `<span>${item.date}</span> <strong>${format(item.amount)}</strong>`;
@@ -173,12 +161,11 @@
     }
 
     function resetAll() {
-        if (confirm("This will wipe ALL totals and history. Proceed?")) {
+        if (confirm("Clear everything?")) {
             localStorage.clear();
             location.reload();
         }
     }
 </script>
-
 </body>
 </html>
