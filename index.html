@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon.png">
     <title>PayTracker</title>
     <style>
         body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
@@ -25,6 +26,7 @@
         .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
         .date-label { font-size: 12px; color: #555; text-align: center; margin-bottom: 10px; display: block; }
         .highlight { color: #d9534f; font-weight: 800; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; }
+        .take-home-final { color: #34c759; font-weight: 800; border-top: 1px solid #eee; padding-top: 10px; margin-top: 5px; }
         
         .adj-section { margin-top: 25px; padding-top: 20px; border-top: 1px dashed #ccc; }
         .history-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; }
@@ -45,16 +47,17 @@
 
     <div id="breakdownArea" class="results" style="display:none;">
         <strong>This Check:</strong>
-        <div class="row" style="margin-top:10px;"><span>Tax/CPP/EI (36%):</span> <span id="curTax"></span></div>
+        <div class="row" style="margin-top:10px;"><span>Tax (36%):</span> <span id="curTax"></span></div>
         <div class="row"><span>Investments (4.4%):</span> <span id="curInv"></span></div>
         <div class="row"><span>Vacation (3.6%):</span> <span id="curVac"></span></div>
         <div class="row highlight"><span>Total Deductions (44%):</span> <span id="curTotal"></span></div>
+        <div class="row take-home-final"><span>Actual Take-home:</span> <span id="curNet"></span></div>
     </div>
 
     <div class="totals">
         <span class="date-label">Last Entry: <span id="lastDate">Never</span></span>
         <div class="row"><strong>Year-to-Date Totals</strong></div>
-        <div class="row"><span>Tax/CPP/EI:</span> <strong id="totTax"></strong></div>
+        <div class="row"><span>Tax:</span> <strong id="totTax"></strong></div>
         <div class="row"><span>Investments:</span> <strong id="totInv"></strong></div>
         <div class="row"><span>Vacation:</span> <strong id="totVac"></strong></div>
     </div>
@@ -68,8 +71,8 @@
         </select>
         <div class="adj-row">
             <select id="adjType">
-                <option value="plus">Add (+)</option>
-                <option value="minus">Minus (-)</option>
+                <option value="plus">Add</option>
+                <option value="minus">Minus</option>
             </select>
             <input type="number" id="adjAmt" placeholder="Amount" inputmode="decimal">
         </div>
@@ -77,7 +80,7 @@
     </div>
 
     <div class="history-section">
-        <label>Pay History:</label>
+        <label>Take-home Pay History:</label>
         <div id="historyList" class="history-list"></div>
     </div>
 
@@ -97,6 +100,7 @@
         const t = pay * 0.36;
         const i = pay * 0.044;
         const v = pay * 0.036;
+        const net = pay - (t + i + v);
         
         const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         lastEntryMemory = { type: 'pay', t, i, v };
@@ -111,6 +115,7 @@
         document.getElementById('curInv').innerText = format(i);
         document.getElementById('curVac').innerText = format(v);
         document.getElementById('curTotal').innerText = format(t + i + v);
+        document.getElementById('curNet').innerText = format(net);
         
         document.getElementById('breakdownArea').style.display = 'block';
         document.getElementById('undoBtn').style.display = 'block';
