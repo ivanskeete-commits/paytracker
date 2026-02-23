@@ -62,7 +62,7 @@
     <div class="adj-section">
         <label>Manual Adjustment:</label>
         <select id="adjCat">
-            <option value="tax">Tax Bucket</option>
+            <option value="tax">Tax</option>
             <option value="invest">Investments</option>
             <option value="vacation">Vacation</option>
         </select>
@@ -121,7 +121,6 @@
 
     function undoLast() {
         if (!lastEntryMemory) return;
-        
         if (lastEntryMemory.type === 'pay') {
             data.tax -= lastEntryMemory.t;
             data.invest -= lastEntryMemory.i;
@@ -129,7 +128,6 @@
         } else {
             data[lastEntryMemory.cat] -= lastEntryMemory.amt;
         }
-        
         data.history.shift();
         lastEntryMemory = null;
         document.getElementById('undoBtn').style.display = 'none';
@@ -148,20 +146,11 @@
         if (type === 'minus') amt = -Math.abs(amt);
 
         const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        
-        // Memory for Undo (Manual adjustments can now be undone too!)
         lastEntryMemory = { type: 'adj', cat: cat, amt: amt };
 
         data[cat] += amt;
         data.lastUpdate = now;
-        
-        // Log it as an adjustment
-        data.history.unshift({ 
-            date: now, 
-            amount: amt, 
-            isAdj: true, 
-            catLabel: catName 
-        });
+        data.history.unshift({ date: now, amount: amt, isAdj: true, catLabel: catName });
 
         document.getElementById('undoBtn').style.display = 'block';
         document.getElementById('adjAmt').value = '';
