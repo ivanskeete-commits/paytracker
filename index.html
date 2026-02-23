@@ -12,6 +12,8 @@
         h2 { text-align: center; color: #111; margin-top: 0; }
         label { font-size: 14px; color: #666; font-weight: 600; display: block; margin-bottom: 5px; }
         input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .adj-row { display: flex; gap: 10px; }
+        .adj-row select { width: 40%; }
         button { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: 0.2s; }
         .btn-calc { background: #007aff; color: white; margin-bottom: 10px; }
         .btn-undo { background: #ff9500; color: white; display: none; margin-bottom: 20px; }
@@ -24,11 +26,10 @@
         .date-label { font-size: 12px; color: #555; text-align: center; margin-bottom: 10px; display: block; }
         .highlight { color: #d9534f; font-weight: 800; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; }
         
+        .adj-section { margin-top: 25px; padding-top: 20px; border-top: 1px dashed #ccc; }
         .history-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; }
         .history-list { font-size: 13px; color: #444; max-height: 150px; overflow-y: auto; }
         .history-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #fafafa; }
-        
-        .adj-section { margin-top: 25px; padding-top: 20px; border-top: 1px dashed #ccc; }
     </style>
 </head>
 <body>
@@ -57,11 +58,6 @@
         <div class="row"><span>Vacation:</span> <strong id="totVac"></strong></div>
     </div>
 
-    <div class="history-section">
-        <label>Entry History:</label>
-        <div id="historyList" class="history-list"></div>
-    </div>
-
     <div class="adj-section">
         <label>Manual Adjustment:</label>
         <select id="adjCat">
@@ -69,8 +65,19 @@
             <option value="invest">Investments</option>
             <option value="vacation">Vacation</option>
         </select>
-        <input type="number" id="adjAmt" placeholder="Amount" inputmode="decimal">
-        <button class="btn-add" onclick="addManual()">Adjust Total</button>
+        <div class="adj-row">
+            <select id="adjType">
+                <option value="plus">Add (+)</option>
+                <option value="minus">Subtract (-)</option>
+            </select>
+            <input type="number" id="adjAmt" placeholder="Amount" inputmode="decimal">
+        </div>
+        <button class="btn-add" onclick="addManual()">Apply Adjustment</button>
+    </div>
+
+    <div class="history-section">
+        <label>Take-home Pay History:</label>
+        <div id="historyList" class="history-list"></div>
     </div>
 
     <button class="btn-reset" onclick="resetAll()">Reset All Data</button>
@@ -86,7 +93,6 @@
         const pay = parseFloat(document.getElementById('payInput').value);
         if (isNaN(pay) || pay <= 0) return;
 
-        // UPDATED RATIOS
         const t = pay * 0.36;
         const i = pay * 0.044;
         const v = pay * 0.036;
@@ -126,9 +132,17 @@
     }
 
     function addManual() {
-        const amt = parseFloat(document.getElementById('adjAmt').value);
+        let amt = parseFloat(document.getElementById('adjAmt').value);
         const cat = document.getElementById('adjCat').value;
+        const type = document.getElementById('adjType').value;
+        
         if (isNaN(amt)) return;
+
+        // If user chose subtract, make the number negative
+        if (type === 'minus') {
+            amt = -Math.abs(amt);
+        }
+
         data[cat] += amt;
         lastEntryMemory = null; 
         document.getElementById('undoBtn').style.display = 'none';
