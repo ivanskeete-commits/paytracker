@@ -68,7 +68,7 @@
         <div class="adj-row">
             <select id="adjType">
                 <option value="plus">Add (+)</option>
-                <option value="minus">Subtract (-)</option>
+                <option value="minus">Minus (-)</option>
             </select>
             <input type="number" id="adjAmt" placeholder="Amount" inputmode="decimal">
         </div>
@@ -138,7 +138,6 @@
         
         if (isNaN(amt)) return;
 
-        // If user chose subtract, make the number negative
         if (type === 'minus') {
             amt = -Math.abs(amt);
         }
