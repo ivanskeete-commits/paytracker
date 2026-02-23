@@ -44,8 +44,8 @@
     <div id="breakdownArea" class="results" style="display:none;">
         <strong>This Check:</strong>
         <div class="row" style="margin-top:10px;"><span>Tax/CPP/EI (36%):</span> <span id="curTax"></span></div>
-        <div class="row"><span>Investments (4.5%):</span> <span id="curInv"></span></div>
-        <div class="row"><span>Vacation (3.5%):</span> <span id="curVac"></span></div>
+        <div class="row"><span>Investments (4.4%):</span> <span id="curInv"></span></div>
+        <div class="row"><span>Vacation (3.6%):</span> <span id="curVac"></span></div>
         <div class="row highlight"><span>Total Deductions (44%):</span> <span id="curTotal"></span></div>
     </div>
 
@@ -88,8 +88,8 @@
 
         // UPDATED RATIOS
         const t = pay * 0.36;
-        const i = pay * 0.045;
-        const v = pay * 0.035;
+        const i = pay * 0.044;
+        const v = pay * 0.036;
         
         const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         lastEntryMemory = { t, i, v };
@@ -122,6 +122,7 @@
         document.getElementById('undoBtn').style.display = 'none';
         document.getElementById('breakdownArea').style.display = 'none';
         save();
+        alert("Last entry undone.");
     }
 
     function addManual() {
