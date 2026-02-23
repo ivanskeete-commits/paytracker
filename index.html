@@ -16,12 +16,18 @@
         .btn-calc { background: #007aff; color: white; margin-bottom: 10px; }
         .btn-undo { background: #ff9500; color: white; display: none; margin-bottom: 20px; }
         .btn-add { background: #34c759; color: white; }
-        .btn-reset { background: none; color: #ff3b30; text-decoration: underline; font-size: 13px; margin-top: 30px; }
+        .btn-reset { background: none; color: #ff3b30; text-decoration: underline; font-size: 11px; margin-top: 20px; width: 100%; }
         
         .results { background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #007aff; }
         .totals { background: #e8f4fd; padding: 20px; border-radius: 12px; }
         .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
+        .date-label { font-size: 12px; color: #555; text-align: center; margin-bottom: 10px; display: block; }
         .highlight { color: #d9534f; font-weight: 800; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; }
+        
+        .history-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; }
+        .history-list { font-size: 13px; color: #444; max-height: 150px; overflow-y: auto; }
+        .history-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #fafafa; }
+        
         .adj-section { margin-top: 25px; padding-top: 20px; border-top: 1px dashed #ccc; }
     </style>
 </head>
@@ -44,10 +50,17 @@
     </div>
 
     <div class="totals">
+        <span class="date-label">Last Entry: <span id="lastDate">Never</span></span>
         <div class="row"><strong>Year-to-Date Totals</strong></div>
         <div class="row"><span>Tax/CPP/EI:</span> <strong id="totTax"></strong></div>
         <div class="row"><span>Investments:</span> <strong id="totInv"></strong></div>
         <div class="row"><span>Vacation:</span> <strong id="totVac"></strong></div>
+    </div>
+
+    <div class="history-section">
+        <label>Entry History:</label>
+        <div id="historyList" class="history-list">
+            </div>
     </div>
 
     <div class="adj-section">
@@ -65,9 +78,9 @@
 </div>
 
 <script>
-    // Load data
-    let data = JSON.parse(localStorage.getItem('payData')) || { tax: 0, invest: 0, vacation: 0 };
-    let lastEntry = null;
+    // Load data from LocalStorage
+    let data = JSON.parse(localStorage.getItem('payData')) || { tax: 0, invest: 0, vacation: 0, lastUpdate: 'Never', history: [] };
+    let lastEntryMemory = null;
 
     updateUI();
 
@@ -75,20 +88,24 @@
         const pay = parseFloat(document.getElementById('payInput').value);
         if (isNaN(pay) || pay <= 0) return;
 
-        // Math
         const t = pay * 0.36;
         const i = pay * 0.04;
         const v = pay * 0.04;
         
-        // Save for undo
-        lastEntry = { t, i, v };
+        // Timestamp
+        const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
-        // Update totals
+        // Memory for Undo
+        lastEntryMemory = { t, i, v };
+
+        // Update data object
         data.tax += t;
         data.invest += i;
         data.vacation += v;
+        data.lastUpdate = now;
+        data.history.unshift({ date: now, amount: pay }); // Add to start of list
 
-        // Show breakdown
+        // Show "This Check" result
         document.getElementById('curTax').innerText = format(t);
         document.getElementById('curInv').innerText = format(i);
         document.getElementById('curVac').innerText = format(v);
@@ -102,12 +119,14 @@
     }
 
     function undoLast() {
-        if (!lastEntry) return;
-        data.tax -= lastEntry.t;
-        data.invest -= lastEntry.i;
-        data.vacation -= lastEntry.v;
+        if (!lastEntryMemory) return;
+        data.tax -= lastEntryMemory.t;
+        data.invest -= lastEntryMemory.i;
+        data.vacation -= lastEntryMemory.v;
         
-        lastEntry = null;
+        data.history.shift(); // Remove most recent history item
+        lastEntryMemory = null;
+        
         document.getElementById('undoBtn').style.display = 'none';
         document.getElementById('breakdownArea').style.display = 'none';
         
@@ -120,8 +139,8 @@
         const cat = document.getElementById('adjCat').value;
         if (isNaN(amt)) return;
 
-        data[cat === 'tax' ? 'tax' : cat === 'invest' ? 'invest' : 'vacation'] += amt;
-        lastEntry = null; // Can't undo manual adjustments easily
+        data[cat] += amt;
+        lastEntryMemory = null; 
         document.getElementById('undoBtn').style.display = 'none';
         document.getElementById('adjAmt').value = '';
         save();
@@ -136,6 +155,17 @@
         document.getElementById('totTax').innerText = format(data.tax);
         document.getElementById('totInv').innerText = format(data.invest);
         document.getElementById('totVac').innerText = format(data.vacation);
+        document.getElementById('lastDate').innerText = data.lastUpdate;
+
+        // Update History List
+        const listDiv = document.getElementById('historyList');
+        listDiv.innerHTML = '';
+        data.history.slice(0, 10).forEach(item => { // Show last 10 entries
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `<span>${item.date}</span> <strong>${format(item.amount)}</strong>`;
+            listDiv.appendChild(div);
+        });
     }
 
     function format(num) {
@@ -143,7 +173,7 @@
     }
 
     function resetAll() {
-        if (confirm("This will wipe all year-to-date totals. Proceed?")) {
+        if (confirm("This will wipe ALL totals and history. Proceed?")) {
             localStorage.clear();
             location.reload();
         }
