@@ -41,7 +41,7 @@
     <h2>PayTracker</h2>
     
     <label>Bi-Weekly after HST Pay:</label>
-    <input type="number" id="payInput" placeholder="$0.00" inputmode="decimal">
+    <input type="number" id="payInput" placeholder="$0.00" inputmode="decimal" oninput="silentSaveDraft()">
     <button class="btn-calc" onclick="calculate()">Calculate & Save</button>
     <button id="undoBtn" class="btn-undo" onclick="undoLast()">Undo Last Entry</button>
 
@@ -64,17 +64,17 @@
 
     <div class="adj-section">
         <label>Manual Adjustment:</label>
-        <select id="adjCat">
+        <select id="adjCat" onchange="silentSaveDraft()">
             <option value="tax">Tax</option>
             <option value="invest">Investments</option>
             <option value="vacation">Vacation</option>
         </select>
         <div class="adj-row">
-            <select id="adjType">
+            <select id="adjType" onchange="silentSaveDraft()">
                 <option value="plus">Add</option>
                 <option value="minus">Minus</option>
             </select>
-            <input type="number" id="adjAmt" placeholder="Amount" inputmode="decimal">
+            <input type="number" id="adjAmt" placeholder="Amount" inputmode="decimal" oninput="silentSaveDraft()">
         </div>
         <button class="btn-add" onclick="addManual()">Apply Adjustment</button>
     </div>
@@ -91,7 +91,31 @@
     let data = JSON.parse(localStorage.getItem('payData')) || { tax: 0, invest: 0, vacation: 0, lastUpdate: 'Never', history: [] };
     let lastEntryMemory = null;
 
-    updateUI();
+    window.onload = function() {
+        loadDraft();
+        updateUI();
+    };
+
+    function silentSaveDraft() {
+        const draft = {
+            payInput: document.getElementById('payInput').value,
+            adjCat: document.getElementById('adjCat').value,
+            adjType: document.getElementById('adjType').value,
+            adjAmt: document.getElementById('adjAmt').value
+        };
+        localStorage.setItem('payTracker_draft', JSON.stringify(draft));
+    }
+
+    function loadDraft() {
+        const saved = localStorage.getItem('payTracker_draft');
+        if (saved) {
+            const draft = JSON.parse(saved);
+            document.getElementById('payInput').value = draft.payInput || "";
+            document.getElementById('adjCat').value = draft.adjCat || "tax";
+            document.getElementById('adjType').value = draft.adjType || "plus";
+            document.getElementById('adjAmt').value = draft.adjAmt || "";
+        }
+    }
 
     function calculate() {
         const pay = parseFloat(document.getElementById('payInput').value);
@@ -121,6 +145,7 @@
         document.getElementById('undoBtn').style.display = 'block';
         document.getElementById('payInput').value = '';
 
+        localStorage.removeItem('payTracker_draft'); // Clear draft on success
         save();
     }
 
@@ -159,6 +184,8 @@
 
         document.getElementById('undoBtn').style.display = 'block';
         document.getElementById('adjAmt').value = '';
+        
+        localStorage.removeItem('payTracker_draft'); // Clear draft on success
         save();
     }
 
