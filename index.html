@@ -30,8 +30,12 @@
         
         .adj-section { margin-top: 25px; padding-top: 20px; border-top: 1px dashed #ccc; }
         .history-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; }
-        .history-list { font-size: 13px; color: #444; max-height: 150px; overflow-y: auto; }
-        .history-item { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #fafafa; }
+        .history-list { font-size: 13px; color: #444; max-height: 200px; overflow-y: auto; }
+        
+        /* Delete Button Styling */
+        .history-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fafafa; }
+        .history-info { display: flex; flex-direction: column; flex-grow: 1; }
+        .btn-del { color: #ff3b30; font-size: 18px; font-weight: bold; background: none; border: none; width: 30px; height: 30px; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 10px; }
         .adj-log-text { color: #666; font-style: italic; font-size: 12px; }
     </style>
 </head>
@@ -41,7 +45,7 @@
     <h2>PayTracker</h2>
     
     <label>Bi-Weekly after HST Pay:</label>
-    <input type="number" id="payInput" placeholder="$0.00" inputmode="decimal" oninput="silentSaveDraft()">
+    <input type="number" id="payInput" placeholder="$0.00" inputmode="decimal">
     <button class="btn-calc" onclick="calculate()">Calculate & Save</button>
     <button id="undoBtn" class="btn-undo" onclick="undoLast()">Undo Last Entry</button>
 
@@ -64,17 +68,17 @@
 
     <div class="adj-section">
         <label>Manual Adjustment:</label>
-        <select id="adjCat" onchange="silentSaveDraft()">
+        <select id="adjCat">
             <option value="tax">Tax</option>
             <option value="invest">Investments</option>
             <option value="vacation">Vacation</option>
         </select>
         <div class="adj-row">
-            <select id="adjType" onchange="silentSaveDraft()">
+            <select id="adjType">
                 <option value="plus">Add</option>
                 <option value="minus">Minus</option>
             </select>
-            <input type="number" id="adjAmt" placeholder="Amount" inputmode="decimal" oninput="silentSaveDraft()">
+            <input type="number" id="adjAmt" placeholder="Amount" inputmode="decimal">
         </div>
         <button class="btn-add" onclick="addManual()">Apply Adjustment</button>
     </div>
@@ -91,31 +95,7 @@
     let data = JSON.parse(localStorage.getItem('payData')) || { tax: 0, invest: 0, vacation: 0, lastUpdate: 'Never', history: [] };
     let lastEntryMemory = null;
 
-    window.onload = function() {
-        loadDraft();
-        updateUI();
-    };
-
-    function silentSaveDraft() {
-        const draft = {
-            payInput: document.getElementById('payInput').value,
-            adjCat: document.getElementById('adjCat').value,
-            adjType: document.getElementById('adjType').value,
-            adjAmt: document.getElementById('adjAmt').value
-        };
-        localStorage.setItem('payTracker_draft', JSON.stringify(draft));
-    }
-
-    function loadDraft() {
-        const saved = localStorage.getItem('payTracker_draft');
-        if (saved) {
-            const draft = JSON.parse(saved);
-            document.getElementById('payInput').value = draft.payInput || "";
-            document.getElementById('adjCat').value = draft.adjCat || "tax";
-            document.getElementById('adjType').value = draft.adjType || "plus";
-            document.getElementById('adjAmt').value = draft.adjAmt || "";
-        }
-    }
+    updateUI();
 
     function calculate() {
         const pay = parseFloat(document.getElementById('payInput').value);
@@ -133,7 +113,15 @@
         data.invest += i;
         data.vacation += v;
         data.lastUpdate = now;
-        data.history.unshift({ date: now, amount: pay, isAdj: false });
+        
+        // Storing type and specific category data for deletions
+        data.history.unshift({ 
+            id: Date.now(), 
+            date: now, 
+            amount: pay, 
+            isAdj: false,
+            t: t, i: i, v: v 
+        });
 
         document.getElementById('curTax').innerText = format(t);
         document.getElementById('curInv').innerText = format(i);
@@ -145,25 +133,7 @@
         document.getElementById('undoBtn').style.display = 'block';
         document.getElementById('payInput').value = '';
 
-        localStorage.removeItem('payTracker_draft'); // Clear draft on success
         save();
-    }
-
-    function undoLast() {
-        if (!lastEntryMemory) return;
-        if (lastEntryMemory.type === 'pay') {
-            data.tax -= lastEntryMemory.t;
-            data.invest -= lastEntryMemory.i;
-            data.vacation -= lastEntryMemory.v;
-        } else {
-            data[lastEntryMemory.cat] -= lastEntryMemory.amt;
-        }
-        data.history.shift();
-        lastEntryMemory = null;
-        document.getElementById('undoBtn').style.display = 'none';
-        document.getElementById('breakdownArea').style.display = 'none';
-        save();
-        alert("Last entry undone.");
     }
 
     function addManual() {
@@ -180,13 +150,46 @@
 
         data[cat] += amt;
         data.lastUpdate = now;
-        data.history.unshift({ date: now, amount: amt, isAdj: true, catLabel: catName });
+        data.history.unshift({ 
+            id: Date.now(),
+            date: now, 
+            amount: amt, 
+            isAdj: true, 
+            catLabel: catName,
+            catKey: cat
+        });
 
         document.getElementById('undoBtn').style.display = 'block';
         document.getElementById('adjAmt').value = '';
-        
-        localStorage.removeItem('payTracker_draft'); // Clear draft on success
         save();
+    }
+
+    function deleteEntry(id) {
+        if (!confirm("Delete this entry and adjust YTD totals?")) return;
+        
+        const index = data.history.findIndex(item => item.id === id);
+        if (index === -1) return;
+        
+        const item = data.history[index];
+        
+        if (item.isAdj) {
+            data[item.catKey] -= item.amount;
+        } else {
+            data.tax -= item.t;
+            data.invest -= item.i;
+            data.vacation -= item.v;
+        }
+        
+        data.history.splice(index, 1);
+        save();
+    }
+
+    function undoLast() {
+        if (!data.history.length) return;
+        const lastItem = data.history[0];
+        deleteEntry(lastItem.id);
+        document.getElementById('undoBtn').style.display = 'none';
+        document.getElementById('breakdownArea').style.display = 'none';
     }
 
     function save() {
@@ -202,15 +205,21 @@
 
         const listDiv = document.getElementById('historyList');
         listDiv.innerHTML = '';
-        data.history.slice(0, 15).forEach(item => {
+        
+        data.history.forEach(item => {
             const div = document.createElement('div');
             div.className = 'history-item';
+            
+            let content = `<div class="history-info"><span>${item.date}</span>`;
             if (item.isAdj) {
                 const sign = item.amount >= 0 ? '+' : '';
-                div.innerHTML = `<span>${item.date}</span> <span class="adj-log-text">Adj: ${item.catLabel} ${sign}${format(item.amount)}</span>`;
+                content += `<span class="adj-log-text">Adj: ${item.catLabel} ${sign}${format(item.amount)}</span></div>`;
             } else {
-                div.innerHTML = `<span>${item.date}</span> <strong>${format(item.amount)}</strong>`;
+                content += `<strong>${format(item.amount)}</strong></div>`;
             }
+            
+            content += `<button class="btn-del" onclick="deleteEntry(${item.id})">×</button>`;
+            div.innerHTML = content;
             listDiv.appendChild(div);
         });
     }
