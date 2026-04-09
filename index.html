@@ -31,12 +31,16 @@
         
         .adj-section { margin-top: 25px; padding-top: 20px; border-top: 1px dashed #ccc; }
         .history-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; }
-        .history-list { font-size: 13px; color: #444; max-height: 200px; overflow-y: auto; }
+        .history-list { font-size: 13px; color: #444; max-height: 250px; overflow-y: auto; }
         
-        .history-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fafafa; }
+        .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #fafafa; }
         .history-info { display: flex; flex-direction: column; flex-grow: 1; }
-        .btn-del { color: #ff3b30; font-size: 18px; font-weight: bold; background: none; border: none; width: 30px; height: 30px; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 10px; }
+        .btn-del { color: #ff3b30; font-size: 20px; font-weight: bold; background: none; border: none; width: 35px; height: 35px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .adj-log-text { color: #666; font-style: italic; font-size: 12px; }
+        
+        /* New styling for editable date */
+        .date-edit-input { border: none; background: transparent; font-size: 11px; color: #888; padding: 0; width: 100%; margin-bottom: 2px; }
+        .date-edit-input:focus { border-bottom: 1px solid #007aff; outline: none; }
     </style>
 </head>
 <body>
@@ -181,6 +185,15 @@
         save();
     }
 
+    // New function to update the date of an entry
+    function updateDate(id, newDateValue) {
+        const index = data.history.findIndex(item => item.id === id);
+        if (index !== -1) {
+            data.history[index].date = newDateValue;
+            localStorage.setItem('payData', JSON.stringify(data));
+        }
+    }
+
     function undoLast() {
         if (!data.history.length) return;
         const lastItem = data.history[0];
@@ -208,16 +221,21 @@
             const div = document.createElement('div');
             div.className = 'history-item';
             
-            let content = `<div class="history-info"><span>${item.date}</span>`;
+            let historyText = "";
             if (item.isAdj) {
                 const sign = item.amount >= 0 ? '+' : '';
-                content += `<span class="adj-log-text">Adj: ${item.catLabel} ${sign}${format(item.amount)}</span></div>`;
+                historyText = `<span class="adj-log-text">Adj: ${item.catLabel} ${sign}${format(item.amount)}</span>`;
             } else {
-                content += `<strong>${format(item.amount)}</strong></div>`;
+                historyText = `<strong>${format(item.amount)}</strong>`;
             }
-            
-            content += `<button class="btn-del" onclick="deleteEntry(${item.id})">×</button>`;
-            div.innerHTML = content;
+
+            div.innerHTML = `
+                <div class="history-info">
+                    <input type="text" class="date-edit-input" value="${item.date}" onchange="updateDate(${item.id}, this.value)">
+                    ${historyText}
+                </div>
+                <button class="btn-del" onclick="deleteEntry(${item.id})">×</button>
+            `;
             listDiv.appendChild(div);
         });
     }
