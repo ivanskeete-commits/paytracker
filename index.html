@@ -3,18 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PayTracker Recovery</title>
+    <title>PayTracker</title>
     <style>
         :root {
             --bg: #f4f7f6;
             --card: #ffffff;
+            --text: #333;
             --accent: #2c3e50;
-            --danger: #e74c3c;
+            --border: #ddd;
             --success: #27ae60;
         }
         body {
-            font-family: -apple-system, system-ui, sans-serif;
-            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -28,123 +31,183 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
-        .recovery-zone {
-            background: #fff5f5;
-            border: 2px dashed var(--danger);
-            text-align: center;
+        h2 { margin-top: 0; font-size: 1.1rem; color: var(--accent); }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
         }
-        h2 { margin-top: 0; font-size: 1rem; color: var(--accent); }
-        .btn {
+        .results {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+        .row.total {
+            border-top: 1px solid var(--border);
+            margin-top: 10px;
+            padding-top: 10px;
+            font-weight: bold;
+            color: var(--success);
+        }
+        button {
             width: 100%;
             padding: 15px;
             border: none;
             border-radius: 8px;
+            background-color: var(--accent);
+            color: white;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
-        }
-        .btn-main { background: var(--accent); color: white; }
-        .btn-recover { background: var(--danger); color: white; font-size: 1.1rem; }
-        input {
-            width: 100%;
-            padding: 12px;
-            margin-top: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 1.1rem;
         }
         .item {
+            background: white;
             padding: 12px;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
-        .ytd-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .del-btn { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; width: auto; }
+        .backup-tool { margin-top: 30px; text-align: center; }
+        .backup-tool textarea { width: 100%; height: 60px; font-size: 0.7rem; margin: 10px 0; border-radius: 8px; padding: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="card recovery-zone">
-        <h2 style="color: var(--danger);">⚠ HISTORY MISSING?</h2>
-        <p style="font-size: 0.85rem;">Click below to force-load the March entries into this version.</p>
-        <button class="btn btn-recover" onclick="forceLoad()">RECOVER MARCH HISTORY</button>
-    </div>
-
     <div class="card">
-        <h2>New Entry (34% Tax / 6.4% Inv)</h2>
-        <input type="number" id="gross" placeholder="Enter Gross Pay" oninput="calc()">
-        <div id="preview" style="margin-top: 10px; font-size: 0.9rem; color: #666;">
-            Take-Home: <span id="th" style="font-weight: bold; color: var(--success);">$0.00</span>
+        <h2>New Pay Entry</h2>
+        <div class="input-group">
+            <label>Gross Pay ($)</label>
+            <input type="number" id="gross" placeholder="0.00" step="0.01" oninput="calc()">
         </div>
-        <button class="btn btn-main" onclick="save()">Save to History</button>
+        
+        <div class="results">
+            <div class="row"><span>Tax (34%)</span> <span id="taxValue">$0.00</span></div>
+            <div class="row"><span>Inv (6.4%)</span> <span id="invValue">$0.00</span></div>
+            <div class="row"><span>Vac (3.6%)</span> <span id="vacValue">$0.00</span></div>
+            <div class="row total"><span>Actual Take-Home</span> <span id="netValue">$0.00</span></div>
+        </div>
+        
+        <button onclick="save()" style="margin-top: 15px;">Save Entry</button>
     </div>
 
     <div class="card">
-        <h2>Year-to-Date</h2>
-        <div class="ytd-row"><span>Gross:</span> <strong id="ytdG">$0.00</strong></div>
-        <div class="ytd-row"><span>Net:</span> <strong id="ytdN" style="color: var(--success);">$0.00</strong></div>
+        <h2>Year-to-Date Totals</h2>
+        <div class="row"><span>Total Gross:</span> <strong id="ytdG">$0.00</strong></div>
+        <div class="row"><span>Total Net:</span> <strong id="ytdN" style="color: var(--success);">$0.00</strong></div>
     </div>
 
-    <div class="card" style="padding: 0;">
-        <div style="padding: 15px;"><h2>History</h2></div>
-        <div id="list"></div>
+    <div id="history"></div>
+
+    <div class="backup-tool">
+        <h3 style="font-size: 0.8rem; color: #888;">Data Management</h3>
+        <textarea id="dataStr" readonly placeholder="Your history code will appear here..."></textarea>
+        <button onclick="copyData()" style="background: #95a5a6; padding: 8px; font-size: 0.8rem;">Copy History Code</button>
+        <p style="font-size: 0.7rem; color: #999; margin-top: 10px;">To move to a new file, paste the code into the console or keep it as a backup.</p>
     </div>
 </div>
 
 <script>
-    const MARCH_DATA = [
-        {id: 1773084513952, date: "3/09/2026", amount: 2993.91, net: 1676.59},
-        {id: 1773084501203, date: "3/09/2026", amount: 2977.57, net: 1667.45},
-        {id: 1773084492565, date: "3/09/2026", amount: 2926.31, net: 1638.73}
-    ];
+    const TAX = 0.34;
+    const INV = 0.064;
+    const VAC = 0.036;
 
-    function forceLoad() {
-        localStorage.setItem('payHistory', JSON.stringify(MARCH_DATA));
-        render();
-        alert("March history recovered!");
+    // 1. AUTO-MIGRATION: Checks for old 'payData' and moves it to 'payHistory'
+    function migrate() {
+        const oldData = localStorage.getItem('payData');
+        const newData = localStorage.getItem('payHistory');
+        if (oldData && !newData) {
+            localStorage.setItem('payHistory', oldData);
+            console.log("Migration successful: payData moved to payHistory.");
+        }
     }
 
     function calc() {
         const g = parseFloat(document.getElementById('gross').value) || 0;
-        const net = g * (1 - (0.34 + 0.064 + 0.036));
-        document.getElementById('th').innerText = `$${net.toFixed(2)}`;
-        return { g, net };
+        const t = g * TAX;
+        const i = g * INV;
+        const v = g * VAC;
+        const n = g - (t + i + v);
+
+        document.getElementById('taxValue').innerText = `$${t.toFixed(2)}`;
+        document.getElementById('invValue').innerText = `$${i.toFixed(2)}`;
+        document.getElementById('vacValue').innerText = `$${v.toFixed(2)}`;
+        document.getElementById('netValue').innerText = `$${n.toFixed(2)}`;
+        return { g, n };
     }
 
     function save() {
-        const { g, net } = calc();
+        const { g, n } = calc();
         if (g <= 0) return;
-        const entry = { id: Date.now(), date: new Date().toLocaleDateString(), amount: g, net: net };
+
+        const entry = {
+            id: Date.now(),
+            date: new Date().toLocaleDateString(),
+            amount: g,
+            net: n
+        };
+
         let history = JSON.parse(localStorage.getItem('payHistory')) || [];
         history.unshift(entry);
         localStorage.setItem('payHistory', JSON.stringify(history));
+        
         document.getElementById('gross').value = '';
+        calc();
+        render();
+    }
+
+    function del(id) {
+        if (!confirm("Delete this entry?")) return;
+        let history = JSON.parse(localStorage.getItem('payHistory')) || [];
+        history = history.filter(item => item.id !== id);
+        localStorage.setItem('payHistory', JSON.stringify(history));
         render();
     }
 
     function render() {
         const history = JSON.parse(localStorage.getItem('payHistory')) || [];
-        const list = document.getElementById('list');
+        const container = document.getElementById('history');
+        const dataBox = document.getElementById('dataStr');
         let gTotal = 0;
         let nTotal = 0;
 
-        list.innerHTML = '';
+        container.innerHTML = '<h2>History</h2>';
+        dataBox.value = JSON.stringify(history);
+        
         history.forEach(item => {
             gTotal += item.amount;
             nTotal += item.net;
             const div = document.createElement('div');
             div.className = 'item';
-            div.innerHTML = `<div><strong>${item.date}</strong></div><div>$${item.net.toFixed(2)}</div>`;
-            list.appendChild(div);
+            div.innerHTML = `
+                <div><strong>${item.date}</strong><br><small>Net: $${item.net.toFixed(2)}</small></div>
+                <button class="del-btn" onclick="del(${item.id})">Del</button>
+            `;
+            container.appendChild(div);
         });
 
         document.getElementById('ytdG').innerText = `$${gTotal.toFixed(2)}`;
         document.getElementById('ytdN').innerText = `$${nTotal.toFixed(2)}`;
     }
 
-    window.onload = render;
+    function copyData() {
+        const copyText = document.getElementById("dataStr");
+        copyText.select();
+        document.execCommand("copy");
+        alert("History copied! You can now paste this into a backup file.");
+    }
+
+    migrate();
+    render();
 </script>
 
 </body>
