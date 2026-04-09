@@ -11,30 +11,26 @@
         .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
         h2 { text-align: center; color: #111; margin-top: 0; }
         
-        .settings-box { background: #f8f9fa; border: 1px solid #eee; padding: 12px; border-radius: 10px; margin-bottom: 20px; }
-        .settings-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .settings-box label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 4px; }
-        .settings-box input { padding: 8px; margin-bottom: 0; text-align: center; font-weight: bold; }
-
         label { font-size: 14px; color: #666; font-weight: 600; display: block; margin-bottom: 5px; }
         input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
         
-        .adj-row { display: flex; gap: 10px; }
-        .adj-row select { width: 40%; }
-        
         button { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: 0.2s; }
         .btn-calc { background: #007aff; color: white; margin-bottom: 10px; }
-        .btn-add { background: #34c759; color: white; }
         .btn-reset { background: none; color: #ff3b30; text-decoration: underline; font-size: 11px; margin-top: 20px; width: 100%; }
         
+        /* This Check / Results Area */
         .results { background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #007aff; }
+        .rate-input { width: 45px; padding: 2px 4px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; text-align: center; font-weight: bold; margin: 0 2px; }
+        
+        /* YTD Totals Area */
         .totals { background: #e8f4fd; padding: 20px; border-radius: 12px; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
+        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 15px; }
         .date-label { font-size: 11px; color: #888; text-align: center; margin-bottom: 10px; display: block; }
         .highlight { color: #d9534f; font-weight: 800; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; }
         .take-home-final { color: #34c759; font-weight: 800; border-top: 1px solid #eee; padding-top: 10px; margin-top: 5px; }
         .total-saved-row { color: #007aff; font-weight: 800; border-top: 2px solid #b3d7ff; padding-top: 10px; margin-top: 5px; }
         
+        /* History Section */
         .history-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; }
         .history-list { font-size: 13px; color: #444; max-height: 250px; overflow-y: auto; }
         .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #fafafa; }
@@ -48,24 +44,24 @@
 <div class="card">
     <h2>PayTracker</h2>
     
-    <div class="settings-box">
-        <label>Rate Settings (%)</label>
-        <div class="settings-grid">
-            <div><label>Tax</label><input type="number" id="rateTax" value="36" onchange="saveSettings()"></div>
-            <div><label>Inv.</label><input type="number" id="rateInv" value="4.4" onchange="saveSettings()"></div>
-            <div><label>Vac.</label><input type="number" id="rateVac" value="3.6" onchange="saveSettings()"></div>
-        </div>
-    </div>
-
     <label>Bi-Weekly after HST Pay:</label>
     <input type="number" id="payInput" placeholder="$0.00" inputmode="decimal">
     <button class="btn-calc" onclick="calculate()">Calculate & Save</button>
 
     <div id="breakdownArea" class="results" style="display:none;">
         <strong>This Check:</strong>
-        <div class="row" style="margin-top:10px;"><span>Tax (<span class="set-tax"></span>%):</span> <span id="curTax"></span></div>
-        <div class="row"><span>Investments (<span class="set-inv"></span>%):</span> <span id="curInv"></span></div>
-        <div class="row"><span>Vacation (<span class="set-vac"></span>%):</span> <span id="curVac"></span></div>
+        <div class="row" style="margin-top:10px;">
+            <span>Tax (<input type="number" id="rateTax" class="rate-input" onchange="warnRateChange('tax', this.value)">%):</span> 
+            <span id="curTax"></span>
+        </div>
+        <div class="row">
+            <span>Inv. (<input type="number" id="rateInv" class="rate-input" onchange="warnRateChange('inv', this.value)">%):</span> 
+            <span id="curInv"></span>
+        </div>
+        <div class="row">
+            <span>Vac. (<input type="number" id="rateVac" class="rate-input" onchange="warnRateChange('vac', this.value)">%):</span> 
+            <span id="curVac"></span>
+        </div>
         <div class="row highlight"><span>Total Deductions:</span> <span id="curTotal"></span></div>
         <div class="row take-home-final"><span>Actual Take-home:</span> <span id="curNet"></span></div>
     </div>
@@ -73,9 +69,9 @@
     <div class="totals">
         <span class="date-label">Last Entry: <span id="lastDate">Never</span></span>
         <div class="row"><strong>Year-to-Date Totals</strong></div>
-        <div class="row"><span>Tax (<span class="set-tax"></span>%):</span> <strong id="totTax"></strong></div>
-        <div class="row"><span>Investments (<span class="set-inv"></span>%):</span> <strong id="totInv"></strong></div>
-        <div class="row"><span>Vacation (<span class="set-vac"></span>%):</span> <strong id="totVac"></strong></div>
+        <div class="row"><span>Tax (<span id="ytdTaxRate"></span>%):</span> <strong id="totTax"></strong></div>
+        <div class="row"><span>Investments (<span id="ytdInvRate"></span>%):</span> <strong id="totInv"></strong></div>
+        <div class="row"><span>Vacation (<span id="ytdVacRate"></span>%):</span> <strong id="totVac"></strong></div>
         <div class="row total-saved-row"><span>Total Saved (Net):</span> <strong id="totSaved"></strong></div>
     </div>
 
@@ -91,22 +87,27 @@
     let settings = JSON.parse(localStorage.getItem('paySettings')) || { tax: 36, inv: 4.4, vac: 3.6 };
     let data = JSON.parse(localStorage.getItem('payData')) || { tax: 0, invest: 0, vacation: 0, lastUpdate: 'Never', history: [] };
     
-    // Load settings into inputs
+    // Initial Load
     document.getElementById('rateTax').value = settings.tax;
     document.getElementById('rateInv').value = settings.inv;
     document.getElementById('rateVac').value = settings.vac;
 
     updateUI();
 
-    function saveSettings() {
-        settings.tax = parseFloat(document.getElementById('rateTax').value) || 0;
-        settings.inv = parseFloat(document.getElementById('rateInv').value) || 0;
-        settings.vac = parseFloat(document.getElementById('rateVac').value) || 0;
-        localStorage.setItem('paySettings', JSON.stringify(settings));
-        updateUI();
+    function warnRateChange(key, newVal) {
+        if (confirm(`Change ${key.toUpperCase()} rate to ${newVal}%? This will affect future calculations.`)) {
+            settings[key] = parseFloat(newVal) || 0;
+            localStorage.setItem('paySettings', JSON.stringify(settings));
+            // If there is currently a number in payInput, recalculate automatically
+            if (document.getElementById('payInput').value) calculate(false); 
+            updateUI();
+        } else {
+            // Revert the input value if cancelled
+            document.getElementById('rate' + key.charAt(0).toUpperCase() + key.slice(1)).value = settings[key];
+        }
     }
 
-    function calculate() {
+    function calculate(shouldSave = true) {
         const pay = parseFloat(document.getElementById('payInput').value);
         if (isNaN(pay) || pay <= 0) return;
 
@@ -115,31 +116,28 @@
         const v = pay * (settings.vac / 100);
         const net = pay - (t + i + v);
         
-        const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-        data.tax += t;
-        data.invest += i;
-        data.vacation += v;
-        data.lastUpdate = now;
-        
-        data.history.unshift({ 
-            id: Date.now(), 
-            date: now, 
-            amount: pay, 
-            t: t, i: i, v: v,
-            rates: { ...settings }
-        });
-
         document.getElementById('curTax').innerText = format(t);
         document.getElementById('curInv').innerText = format(i);
         document.getElementById('curVac').innerText = format(v);
         document.getElementById('curTotal').innerText = format(t + i + v);
         document.getElementById('curNet').innerText = format(net);
-        
         document.getElementById('breakdownArea').style.display = 'block';
-        document.getElementById('payInput').value = '';
 
-        save();
+        if (shouldSave) {
+            const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            data.tax += t;
+            data.invest += i;
+            data.vacation += v;
+            data.lastUpdate = now;
+            data.history.unshift({ 
+                id: Date.now(), 
+                date: now, 
+                amount: pay, 
+                t: t, i: i, v: v 
+            });
+            document.getElementById('payInput').value = '';
+            save();
+        }
     }
 
     function deleteEntry(id) {
@@ -170,10 +168,10 @@
     }
 
     function updateUI() {
-        // Update labels with current rates
-        document.querySelectorAll('.set-tax').forEach(el => el.innerText = settings.tax);
-        document.querySelectorAll('.set-inv').forEach(el => el.innerText = settings.inv);
-        document.querySelectorAll('.set-vac').forEach(el => el.innerText = settings.vac);
+        // Update YTD Labels
+        document.getElementById('ytdTaxRate').innerText = settings.tax;
+        document.getElementById('ytdInvRate').innerText = settings.inv;
+        document.getElementById('ytdVacRate').innerText = settings.vac;
 
         document.getElementById('totTax').innerText = format(data.tax);
         document.getElementById('totInv').innerText = format(data.invest);
@@ -203,7 +201,7 @@
     }
 
     function resetAll() {
-        if (confirm("Clear everything?")) {
+        if (confirm("Clear everything? This cannot be undone.")) {
             localStorage.clear();
             location.reload();
         }
