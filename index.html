@@ -5,42 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icon.png">
-    <title>PayTracker</title>
+    <title>PayTracker Pro</title>
     <style>
         body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
         .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
         h2 { text-align: center; color: #111; margin-top: 0; }
+        
+        .settings-box { background: #f8f9fa; border: 1px solid #eee; padding: 12px; border-radius: 10px; margin-bottom: 20px; }
+        .settings-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .settings-box label { font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 4px; }
+        .settings-box input { padding: 8px; margin-bottom: 0; text-align: center; font-weight: bold; }
+
         label { font-size: 14px; color: #666; font-weight: 600; display: block; margin-bottom: 5px; }
         input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        
         .adj-row { display: flex; gap: 10px; }
         .adj-row select { width: 40%; }
+        
         button { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: 0.2s; }
         .btn-calc { background: #007aff; color: white; margin-bottom: 10px; }
-        .btn-undo { background: #ff9500; color: white; display: none; margin-bottom: 20px; }
         .btn-add { background: #34c759; color: white; }
         .btn-reset { background: none; color: #ff3b30; text-decoration: underline; font-size: 11px; margin-top: 20px; width: 100%; }
         
         .results { background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #007aff; }
         .totals { background: #e8f4fd; padding: 20px; border-radius: 12px; }
         .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
-        .date-label { font-size: 12px; color: #555; text-align: center; margin-bottom: 10px; display: block; }
+        .date-label { font-size: 11px; color: #888; text-align: center; margin-bottom: 10px; display: block; }
         .highlight { color: #d9534f; font-weight: 800; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; }
         .take-home-final { color: #34c759; font-weight: 800; border-top: 1px solid #eee; padding-top: 10px; margin-top: 5px; }
         .total-saved-row { color: #007aff; font-weight: 800; border-top: 2px solid #b3d7ff; padding-top: 10px; margin-top: 5px; }
         
-        .adj-section { margin-top: 25px; padding-top: 20px; border-top: 1px dashed #ccc; }
         .history-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; }
         .history-list { font-size: 13px; color: #444; max-height: 250px; overflow-y: auto; }
-        
         .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #fafafa; }
         .history-info { display: flex; flex-direction: column; flex-grow: 1; }
-        .btn-del { color: #ff3b30; font-size: 20px; font-weight: bold; background: none; border: none; width: 35px; height: 35px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .adj-log-text { color: #666; font-style: italic; font-size: 12px; }
-        
-        /* New styling for editable date */
-        .date-edit-input { border: none; background: transparent; font-size: 11px; color: #888; padding: 0; width: 100%; margin-bottom: 2px; }
-        .date-edit-input:focus { border-bottom: 1px solid #007aff; outline: none; }
+        .btn-del { color: #ff3b30; font-size: 20px; font-weight: bold; background: none; border: none; width: 35px; cursor: pointer; }
+        .date-edit-input { border: none; background: transparent; font-size: 11px; color: #888; width: 100%; }
     </style>
 </head>
 <body>
@@ -48,48 +48,39 @@
 <div class="card">
     <h2>PayTracker</h2>
     
+    <div class="settings-box">
+        <label>Rate Settings (%)</label>
+        <div class="settings-grid">
+            <div><label>Tax</label><input type="number" id="rateTax" value="36" onchange="saveSettings()"></div>
+            <div><label>Inv.</label><input type="number" id="rateInv" value="4.4" onchange="saveSettings()"></div>
+            <div><label>Vac.</label><input type="number" id="rateVac" value="3.6" onchange="saveSettings()"></div>
+        </div>
+    </div>
+
     <label>Bi-Weekly after HST Pay:</label>
     <input type="number" id="payInput" placeholder="$0.00" inputmode="decimal">
     <button class="btn-calc" onclick="calculate()">Calculate & Save</button>
-    <button id="undoBtn" class="btn-undo" onclick="undoLast()">Undo Last Entry</button>
 
     <div id="breakdownArea" class="results" style="display:none;">
         <strong>This Check:</strong>
-        <div class="row" style="margin-top:10px;"><span>Tax (36%):</span> <span id="curTax"></span></div>
-        <div class="row"><span>Investments (4.4%):</span> <span id="curInv"></span></div>
-        <div class="row"><span>Vacation (3.6%):</span> <span id="curVac"></span></div>
-        <div class="row highlight"><span>Total Deductions (44%):</span> <span id="curTotal"></span></div>
+        <div class="row" style="margin-top:10px;"><span>Tax (<span class="set-tax"></span>%):</span> <span id="curTax"></span></div>
+        <div class="row"><span>Investments (<span class="set-inv"></span>%):</span> <span id="curInv"></span></div>
+        <div class="row"><span>Vacation (<span class="set-vac"></span>%):</span> <span id="curVac"></span></div>
+        <div class="row highlight"><span>Total Deductions:</span> <span id="curTotal"></span></div>
         <div class="row take-home-final"><span>Actual Take-home:</span> <span id="curNet"></span></div>
     </div>
 
     <div class="totals">
         <span class="date-label">Last Entry: <span id="lastDate">Never</span></span>
         <div class="row"><strong>Year-to-Date Totals</strong></div>
-        <div class="row"><span>Tax (36%):</span> <strong id="totTax"></strong></div>
-        <div class="row"><span>Investments (4.4%):</span> <strong id="totInv"></strong></div>
-        <div class="row"><span>Vacation (3.6%):</span> <strong id="totVac"></strong></div>
+        <div class="row"><span>Tax (<span class="set-tax"></span>%):</span> <strong id="totTax"></strong></div>
+        <div class="row"><span>Investments (<span class="set-inv"></span>%):</span> <strong id="totInv"></strong></div>
+        <div class="row"><span>Vacation (<span class="set-vac"></span>%):</span> <strong id="totVac"></strong></div>
         <div class="row total-saved-row"><span>Total Saved (Net):</span> <strong id="totSaved"></strong></div>
     </div>
 
-    <div class="adj-section">
-        <label>Manual Adjustment:</label>
-        <select id="adjCat">
-            <option value="tax">Tax</option>
-            <option value="invest">Investments</option>
-            <option value="vacation">Vacation</option>
-        </select>
-        <div class="adj-row">
-            <select id="adjType">
-                <option value="plus">Add</option>
-                <option value="minus">Minus</option>
-            </select>
-            <input type="number" id="adjAmt" placeholder="Amount" inputmode="decimal">
-        </div>
-        <button class="btn-add" onclick="addManual()">Apply Adjustment</button>
-    </div>
-
     <div class="history-section">
-        <label>Take-home Pay History:</label>
+        <label>Pay History:</label>
         <div id="historyList" class="history-list"></div>
     </div>
 
@@ -97,17 +88,31 @@
 </div>
 
 <script>
+    let settings = JSON.parse(localStorage.getItem('paySettings')) || { tax: 36, inv: 4.4, vac: 3.6 };
     let data = JSON.parse(localStorage.getItem('payData')) || { tax: 0, invest: 0, vacation: 0, lastUpdate: 'Never', history: [] };
     
+    // Load settings into inputs
+    document.getElementById('rateTax').value = settings.tax;
+    document.getElementById('rateInv').value = settings.inv;
+    document.getElementById('rateVac').value = settings.vac;
+
     updateUI();
+
+    function saveSettings() {
+        settings.tax = parseFloat(document.getElementById('rateTax').value) || 0;
+        settings.inv = parseFloat(document.getElementById('rateInv').value) || 0;
+        settings.vac = parseFloat(document.getElementById('rateVac').value) || 0;
+        localStorage.setItem('paySettings', JSON.stringify(settings));
+        updateUI();
+    }
 
     function calculate() {
         const pay = parseFloat(document.getElementById('payInput').value);
         if (isNaN(pay) || pay <= 0) return;
 
-        const t = pay * 0.36;
-        const i = pay * 0.044;
-        const v = pay * 0.036;
+        const t = pay * (settings.tax / 100);
+        const i = pay * (settings.inv / 100);
+        const v = pay * (settings.vac / 100);
         const net = pay - (t + i + v);
         
         const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -121,8 +126,8 @@
             id: Date.now(), 
             date: now, 
             amount: pay, 
-            isAdj: false,
-            t: t, i: i, v: v 
+            t: t, i: i, v: v,
+            rates: { ...settings }
         });
 
         document.getElementById('curTax').innerText = format(t);
@@ -132,60 +137,25 @@
         document.getElementById('curNet').innerText = format(net);
         
         document.getElementById('breakdownArea').style.display = 'block';
-        document.getElementById('undoBtn').style.display = 'block';
         document.getElementById('payInput').value = '';
 
         save();
     }
 
-    function addManual() {
-        let amt = parseFloat(document.getElementById('adjAmt').value);
-        const cat = document.getElementById('adjCat').value;
-        const type = document.getElementById('adjType').value;
-        const catName = document.getElementById('adjCat').options[document.getElementById('adjCat').selectedIndex].text;
-        
-        if (isNaN(amt)) return;
-        if (type === 'minus') amt = -Math.abs(amt);
-
-        const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
-        data[cat] += amt;
-        data.lastUpdate = now;
-        data.history.unshift({ 
-            id: Date.now(),
-            date: now, 
-            amount: amt, 
-            isAdj: true, 
-            catLabel: catName,
-            catKey: cat
-        });
-
-        document.getElementById('undoBtn').style.display = 'block';
-        document.getElementById('adjAmt').value = '';
-        save();
-    }
-
     function deleteEntry(id) {
         if (!confirm("Delete this entry and adjust YTD totals?")) return;
-        
         const index = data.history.findIndex(item => item.id === id);
         if (index === -1) return;
         
         const item = data.history[index];
-        
-        if (item.isAdj) {
-            data[item.catKey] -= item.amount;
-        } else {
-            data.tax -= item.t;
-            data.invest -= item.i;
-            data.vacation -= item.v;
-        }
+        data.tax -= item.t;
+        data.invest -= item.i;
+        data.vacation -= item.v;
         
         data.history.splice(index, 1);
         save();
     }
 
-    // New function to update the date of an entry
     function updateDate(id, newDateValue) {
         const index = data.history.findIndex(item => item.id === id);
         if (index !== -1) {
@@ -194,20 +164,17 @@
         }
     }
 
-    function undoLast() {
-        if (!data.history.length) return;
-        const lastItem = data.history[0];
-        deleteEntry(lastItem.id);
-        document.getElementById('undoBtn').style.display = 'none';
-        document.getElementById('breakdownArea').style.display = 'none';
-    }
-
     function save() {
         localStorage.setItem('payData', JSON.stringify(data));
         updateUI();
     }
 
     function updateUI() {
+        // Update labels with current rates
+        document.querySelectorAll('.set-tax').forEach(el => el.innerText = settings.tax);
+        document.querySelectorAll('.set-inv').forEach(el => el.innerText = settings.inv);
+        document.querySelectorAll('.set-vac').forEach(el => el.innerText = settings.vac);
+
         document.getElementById('totTax').innerText = format(data.tax);
         document.getElementById('totInv').innerText = format(data.invest);
         document.getElementById('totVac').innerText = format(data.vacation);
@@ -220,19 +187,10 @@
         data.history.forEach(item => {
             const div = document.createElement('div');
             div.className = 'history-item';
-            
-            let historyText = "";
-            if (item.isAdj) {
-                const sign = item.amount >= 0 ? '+' : '';
-                historyText = `<span class="adj-log-text">Adj: ${item.catLabel} ${sign}${format(item.amount)}</span>`;
-            } else {
-                historyText = `<strong>${format(item.amount)}</strong>`;
-            }
-
             div.innerHTML = `
                 <div class="history-info">
                     <input type="text" class="date-edit-input" value="${item.date}" onchange="updateDate(${item.id}, this.value)">
-                    ${historyText}
+                    <strong>${format(item.amount)}</strong>
                 </div>
                 <button class="btn-del" onclick="deleteEntry(${item.id})">×</button>
             `;
