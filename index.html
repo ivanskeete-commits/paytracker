@@ -3,22 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PayTracker Pro</title>
+    <title>PayTracker Recovery</title>
     <style>
         :root {
-            --primary-bg: #f4f7f6;
-            --card-bg: #ffffff;
-            --text-main: #333;
+            --bg: #f4f7f6;
+            --card: #ffffff;
             --accent: #2c3e50;
-            --border: #ddd;
-            --success: #27ae60;
             --danger: #e74c3c;
+            --success: #27ae60;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--primary-bg);
-            color: var(--text-main);
-            margin: 0;
+            font-family: -apple-system, system-ui, sans-serif;
+            background: var(--bg);
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -26,191 +22,128 @@
         }
         .container { width: 100%; max-width: 400px; }
         .card {
-            background: var(--card-bg);
+            background: var(--card);
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
-        h2 { margin-top: 0; font-size: 1.1rem; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.85rem; color: #666; }
+        .recovery-zone {
+            background: #fff5f5;
+            border: 2px dashed var(--danger);
+            text-align: center;
+        }
+        h2 { margin-top: 0; font-size: 1rem; color: var(--accent); }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-main { background: var(--accent); color: white; }
+        .btn-recover { background: var(--danger); color: white; font-size: 1.1rem; }
         input {
             width: 100%;
-            padding: 14px;
-            border: 1px solid var(--border);
+            padding: 12px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
             border-radius: 8px;
             box-sizing: border-box;
             font-size: 1.1rem;
         }
-        .results {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border: 1px solid #eee;
-        }
-        .result-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
-        .result-row.total {
-            border-top: 2px solid var(--border);
-            margin-top: 10px;
-            padding-top: 10px;
-            font-weight: bold;
-            color: var(--success);
-            font-size: 1.1rem;
-        }
-        button {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 8px;
-            background-color: var(--accent);
-            color: white;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .history-item {
-            background: white;
+        .item {
             padding: 12px;
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid #eee;
             display: flex;
             justify-content: space-between;
-            align-items: center;
         }
-        .delete-btn {
-            background: var(--danger);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-        }
-        .debug-btn {
-            background: #95a5a6;
-            margin-top: 10px;
-            font-size: 0.8rem;
-            padding: 10px;
-        }
+        .ytd-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="card">
-        <h2>New Entry</h2>
-        <div class="input-group">
-            <label>Gross Pay Amount ($)</label>
-            <input type="number" id="grossPay" placeholder="0.00" step="0.01" oninput="calculate()">
-        </div>
-        
-        <div class="results">
-            <div class="result-row"><span>Tax (34%)</span> <span id="taxValue">$0.00</span></div>
-            <div class="result-row"><span>Investments (6.4%)</span> <span id="invValue">$0.00</span></div>
-            <div class="result-row"><span>Vacation (3.6%)</span> <span id="vacValue">$0.00</span></div>
-            <div class="result-row total"><span>Take-Home</span> <span id="takeHomeValue">$0.00</span></div>
-        </div>
-        
-        <button onclick="saveEntry()" style="margin-top: 15px;">Save Record</button>
+    <div class="card recovery-zone">
+        <h2 style="color: var(--danger);">⚠ HISTORY MISSING?</h2>
+        <p style="font-size: 0.85rem;">Click below to force-load the March entries into this version.</p>
+        <button class="btn btn-recover" onclick="forceLoad()">RECOVER MARCH HISTORY</button>
     </div>
 
     <div class="card">
-        <h2>2026 YTD Summary</h2>
-        <div class="result-row"><span>Total Gross:</span> <strong id="ytdGross">$0.00</strong></div>
-        <div class="result-row"><span>Total Net:</span> <strong id="ytdNet" style="color: var(--success);">$0.00</strong></div>
+        <h2>New Entry (34% Tax / 6.4% Inv)</h2>
+        <input type="number" id="gross" placeholder="Enter Gross Pay" oninput="calc()">
+        <div id="preview" style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+            Take-Home: <span id="th" style="font-weight: bold; color: var(--success);">$0.00</span>
+        </div>
+        <button class="btn btn-main" onclick="save()">Save to History</button>
+    </div>
+
+    <div class="card">
+        <h2>Year-to-Date</h2>
+        <div class="ytd-row"><span>Gross:</span> <strong id="ytdG">$0.00</strong></div>
+        <div class="ytd-row"><span>Net:</span> <strong id="ytdN" style="color: var(--success);">$0.00</strong></div>
     </div>
 
     <div class="card" style="padding: 0;">
-        <div style="padding: 20px 20px 10px 20px;"><h2>History</h2></div>
-        <div id="historyList"></div>
-    </div>
-
-    <div class="card" style="background: #fdf2f2; border: 1px solid #feb2b2;">
-        <h2>Data Recovery</h2>
-        <p style="font-size: 0.8rem; margin-bottom: 10px;">Click below if your history is missing:</p>
-        <button class="debug-btn" onclick="forceLoad()">Force Load March Data</button>
+        <div style="padding: 15px;"><h2>History</h2></div>
+        <div id="list"></div>
     </div>
 </div>
 
 <script>
-    const TAX_RATE = 0.34;
-    const INV_RATE = 0.064;
-    const VAC_RATE = 0.036;
-
     const MARCH_DATA = [
-        {id: 1773084513952, date: "3/9/2026 04:28 PM", amount: 2993.91, net: 1676.59},
-        {id: 1773084501203, date: "3/9/2026 04:28 PM", amount: 2977.57, net: 1667.45},
-        {id: 1773084492565, date: "3/9/2026 04:28 PM", amount: 2926.31, net: 1638.73}
+        {id: 1773084513952, date: "3/09/2026", amount: 2993.91, net: 1676.59},
+        {id: 1773084501203, date: "3/09/2026", amount: 2977.57, net: 1667.45},
+        {id: 1773084492565, date: "3/09/2026", amount: 2926.31, net: 1638.73}
     ];
 
     function forceLoad() {
-        if(confirm("This will overwrite your current list with the March entries. Continue?")) {
-            localStorage.setItem('payHistory', JSON.stringify(MARCH_DATA));
-            render();
-        }
+        localStorage.setItem('payHistory', JSON.stringify(MARCH_DATA));
+        render();
+        alert("March history recovered!");
     }
 
-    function calculate() {
-        const gross = parseFloat(document.getElementById('grossPay').value) || 0;
-        const tax = gross * TAX_RATE;
-        const inv = gross * INV_RATE;
-        const vac = gross * VAC_RATE;
-        const net = gross - (tax + inv + vac);
-
-        document.getElementById('taxValue').innerText = `$${tax.toFixed(2)}`;
-        document.getElementById('invValue').innerText = `$${inv.toFixed(2)}`;
-        document.getElementById('vacValue').innerText = `$${vac.toFixed(2)}`;
-        document.getElementById('takeHomeValue').innerText = `$${net.toFixed(2)}`;
-        
-        return { gross, net };
+    function calc() {
+        const g = parseFloat(document.getElementById('gross').value) || 0;
+        const net = g * (1 - (0.34 + 0.064 + 0.036));
+        document.getElementById('th').innerText = `$${net.toFixed(2)}`;
+        return { g, net };
     }
 
-    function saveEntry() {
-        const data = calculate();
-        if (data.gross <= 0) return;
-
-        const entry = {
-            id: Date.now(),
-            date: new Date().toLocaleString([], {year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'}),
-            amount: data.gross,
-            net: data.net
-        };
-
+    function save() {
+        const { g, net } = calc();
+        if (g <= 0) return;
+        const entry = { id: Date.now(), date: new Date().toLocaleDateString(), amount: g, net: net };
         let history = JSON.parse(localStorage.getItem('payHistory')) || [];
         history.unshift(entry);
         localStorage.setItem('payHistory', JSON.stringify(history));
-        
-        document.getElementById('grossPay').value = '';
+        document.getElementById('gross').value = '';
         render();
     }
 
     function render() {
         const history = JSON.parse(localStorage.getItem('payHistory')) || [];
-        const list = document.getElementById('historyList');
-        let ytdG = 0;
-        let ytdN = 0;
+        const list = document.getElementById('list');
+        let gTotal = 0;
+        let nTotal = 0;
 
         list.innerHTML = '';
-        
         history.forEach(item => {
-            ytdG += item.amount;
-            ytdN += item.net;
-            
+            gTotal += item.amount;
+            nTotal += item.net;
             const div = document.createElement('div');
-            div.className = 'history-item';
-            div.innerHTML = `
-                <div>
-                    <div style="font-weight: bold; font-size: 0.9rem;">${item.date}</div>
-                    <div style="font-size: 0.8rem; color: #666;">Gross: $${item.amount.toFixed(2)} | Net: $${item.net.toFixed(2)}</div>
-                </div>
-            `;
+            div.className = 'item';
+            div.innerHTML = `<div><strong>${item.date}</strong></div><div>$${item.net.toFixed(2)}</div>`;
             list.appendChild(div);
         });
 
-        document.getElementById('ytdGross').innerText = `$${ytdG.toFixed(2)}`;
-        document.getElementById('ytdNet').innerText = `$${ytdN.toFixed(2)}`;
+        document.getElementById('ytdG').innerText = `$${gTotal.toFixed(2)}`;
+        document.getElementById('ytdN').innerText = `$${nTotal.toFixed(2)}`;
     }
 
-    // Load history on start
     window.onload = render;
 </script>
 
