@@ -31,9 +31,9 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-bottom: 20px;
         }
-        h2 { margin-top: 0; font-size: 1.1rem; color: var(--accent); }
+        h2 { margin-top: 0; font-size: 1.1rem; color: var(--accent); text-transform: uppercase; }
         .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.85rem; color: #666; }
         input {
             width: 100%;
             padding: 12px;
@@ -72,8 +72,18 @@
             padding: 12px;
             border-bottom: 1px solid var(--border);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .item-header { display: flex; justify-content: space-between; align-items: center; }
+        .date-edit { 
+            border: none; 
+            font-weight: bold; 
+            font-size: 0.9rem; 
+            background: #f9f9f9; 
+            padding: 4px; 
+            width: 130px; 
+            border-radius: 4px;
         }
         .del-btn { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; width: auto; }
         .backup-tool { margin-top: 30px; text-align: center; }
@@ -85,6 +95,12 @@
 <div class="container">
     <div class="card">
         <h2>New Pay Entry</h2>
+        
+        <div class="input-group">
+            <label>Pay Date</label>
+            <input type="date" id="entryDate">
+        </div>
+
         <div class="input-group">
             <label>Gross Pay ($)</label>
             <input type="number" id="gross" placeholder="0.00" step="0.01" oninput="calc()">
@@ -110,9 +126,8 @@
 
     <div class="backup-tool">
         <h3 style="font-size: 0.8rem; color: #888;">Data Management</h3>
-        <textarea id="dataStr" readonly placeholder="Your history code will appear here..."></textarea>
+        <textarea id="dataStr" readonly></textarea>
         <button onclick="copyData()" style="background: #95a5a6; padding: 8px; font-size: 0.8rem;">Copy History Code</button>
-        <p style="font-size: 0.7rem; color: #999; margin-top: 10px;">To move to a new file, paste the code into the console or keep it as a backup.</p>
     </div>
 </div>
 
@@ -121,13 +136,14 @@
     const INV = 0.064;
     const VAC = 0.036;
 
-    // 1. AUTO-MIGRATION: Checks for old 'payData' and moves it to 'payHistory'
+    // Set default date to today
+    document.getElementById('entryDate').valueAsDate = new Date();
+
     function migrate() {
         const oldData = localStorage.getItem('payData');
         const newData = localStorage.getItem('payHistory');
         if (oldData && !newData) {
             localStorage.setItem('payHistory', oldData);
-            console.log("Migration successful: payData moved to payHistory.");
         }
     }
 
@@ -147,11 +163,12 @@
 
     function save() {
         const { g, n } = calc();
-        if (g <= 0) return;
+        const dateVal = document.getElementById('entryDate').value;
+        if (g <= 0 || !dateVal) return;
 
         const entry = {
             id: Date.now(),
-            date: new Date().toLocaleDateString(),
+            date: dateVal, // Saves in YYYY-MM-DD format
             amount: g,
             net: n
         };
@@ -163,6 +180,17 @@
         document.getElementById('gross').value = '';
         calc();
         render();
+    }
+
+    // Function to update date from the history list
+    function updateEntryDate(id, newDate) {
+        let history = JSON.parse(localStorage.getItem('payHistory')) || [];
+        const index = history.findIndex(item => item.id === id);
+        if (index !== -1) {
+            history[index].date = newDate;
+            localStorage.setItem('payHistory', JSON.stringify(history));
+            render();
+        }
     }
 
     function del(id) {
@@ -186,11 +214,17 @@
         history.forEach(item => {
             gTotal += item.amount;
             nTotal += item.net;
+            
             const div = document.createElement('div');
             div.className = 'item';
             div.innerHTML = `
-                <div><strong>${item.date}</strong><br><small>Net: $${item.net.toFixed(2)}</small></div>
-                <button class="del-btn" onclick="del(${item.id})">Del</button>
+                <div class="item-header">
+                    <input type="date" class="date-edit" value="${item.date}" onchange="updateEntryDate(${item.id}, this.value)">
+                    <button class="del-btn" onclick="del(${item.id})">Del</button>
+                </div>
+                <div style="font-size: 0.85rem; color: #666;">
+                    Gross: $${item.amount.toFixed(2)} | <strong>Net: $${item.net.toFixed(2)}</strong>
+                </div>
             `;
             container.appendChild(div);
         });
@@ -203,7 +237,7 @@
         const copyText = document.getElementById("dataStr");
         copyText.select();
         document.execCommand("copy");
-        alert("History copied! You can now paste this into a backup file.");
+        alert("History code copied!");
     }
 
     migrate();
