@@ -3,237 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icon.png">
     <title>PayTracker</title>
     <style>
-        body { font-family: -apple-system, system-ui, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h2 { text-align: center; color: #111; margin-top: 0; }
-        label { font-size: 14px; color: #666; font-weight: 600; display: block; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        .adj-row { display: flex; gap: 10px; }
-        .adj-row select { width: 40%; }
-        button { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; transition: 0.2s; }
-        .btn-calc { background: #007aff; color: white; margin-bottom: 10px; }
-        .btn-undo { background: #ff9500; color: white; display: none; margin-bottom: 20px; }
-        .btn-add { background: #34c759; color: white; }
-        .btn-reset { background: none; color: #ff3b30; text-decoration: underline; font-size: 11px; margin-top: 20px; width: 100%; }
-        
-        .results { background: #f8f9fa; padding: 15px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #007aff; }
-        .totals { background: #e8f4fd; padding: 20px; border-radius: 12px; }
-        .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
-        .date-label { font-size: 12px; color: #555; text-align: center; margin-bottom: 10px; display: block; }
-        .highlight { color: #d9534f; font-weight: 800; border-top: 1px solid #ccc; padding-top: 10px; margin-top: 10px; }
-        .take-home-final { color: #34c759; font-weight: 800; border-top: 1px solid #eee; padding-top: 10px; margin-top: 5px; }
-        
-        .adj-section { margin-top: 25px; padding-top: 20px; border-top: 1px dashed #ccc; }
-        .history-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; }
-        .history-list { font-size: 13px; color: #444; max-height: 200px; overflow-y: auto; }
-        
-        /* Delete Button Styling */
-        .history-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fafafa; }
-        .history-info { display: flex; flex-direction: column; flex-grow: 1; }
-        .btn-del { color: #ff3b30; font-size: 18px; font-weight: bold; background: none; border: none; width: 30px; height: 30px; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 10px; }
-        .adj-log-text { color: #666; font-style: italic; font-size: 12px; }
+        :root {
+            --primary-bg: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333;
+            --accent: #2c3e50;
+            --border: #ddd;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h2 { margin-top: 0; font-size: 1.2rem; color: var(--accent); }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 0.9rem; }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        .results {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        .result-row.total {
+            border-top: 1px solid var(--border);
+            margin-top: 10px;
+            padding-top: 10px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--accent);
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:active { opacity: 0.8; }
+        .history-item {
+            background: white;
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>PayTracker</h2>
-    
-    <label>Bi-Weekly after HST Pay:</label>
-    <input type="number" id="payInput" placeholder="$0.00" inputmode="decimal">
-    <button class="btn-calc" onclick="calculate()">Calculate & Save</button>
-    <button id="undoBtn" class="btn-undo" onclick="undoLast()">Undo Last Entry</button>
-
-    <div id="breakdownArea" class="results" style="display:none;">
-        <strong>This Check:</strong>
-        <div class="row" style="margin-top:10px;"><span>Tax (36%):</span> <span id="curTax"></span></div>
-        <div class="row"><span>Investments (4.4%):</span> <span id="curInv"></span></div>
-        <div class="row"><span>Vacation (3.6%):</span> <span id="curVac"></span></div>
-        <div class="row highlight"><span>Total Deductions (44%):</span> <span id="curTotal"></span></div>
-        <div class="row take-home-final"><span>Actual Take-home:</span> <span id="curNet"></span></div>
-    </div>
-
-    <div class="totals">
-        <span class="date-label">Last Entry: <span id="lastDate">Never</span></span>
-        <div class="row"><strong>Year-to-Date Totals</strong></div>
-        <div class="row"><span>Tax (36%):</span> <strong id="totTax"></strong></div>
-        <div class="row"><span>Investments (4.4%):</span> <strong id="totInv"></strong></div>
-        <div class="row"><span>Vacation (3.6%):</span> <strong id="totVac"></strong></div>
-    </div>
-
-    <div class="adj-section">
-        <label>Manual Adjustment:</label>
-        <select id="adjCat">
-            <option value="tax">Tax</option>
-            <option value="invest">Investments</option>
-            <option value="vacation">Vacation</option>
-        </select>
-        <div class="adj-row">
-            <select id="adjType">
-                <option value="plus">Add</option>
-                <option value="minus">Minus</option>
-            </select>
-            <input type="number" id="adjAmt" placeholder="Amount" inputmode="decimal">
+<div class="container">
+    <div class="card">
+        <h2>New Pay Entry</h2>
+        <div class="input-group">
+            <label>Gross Pay ($)</label>
+            <input type="number" id="grossPay" placeholder="0.00" step="0.01" oninput="calculate()">
         </div>
-        <button class="btn-add" onclick="addManual()">Apply Adjustment</button>
+        
+        <div class="results">
+            <div class="result-row">
+                <span>Tax (34%):</span>
+                <span id="taxValue">$0.00</span>
+            </div>
+            <div class="result-row">
+                <span>Investments (6.4%):</span>
+                <span id="invValue">$0.00</span>
+            </div>
+            <div class="result-row">
+                <span>Vacation Fund (3.6%):</span>
+                <span id="vacValue">$0.00</span>
+            </div>
+            <div class="result-row total">
+                <span>Actual Take-Home:</span>
+                <span id="takeHomeValue">$0.00</span>
+            </div>
+        </div>
+        
+        <button onclick="saveEntry()">Save to History</button>
     </div>
 
-    <div class="history-section">
-        <label>Take-home Pay History:</label>
-        <div id="historyList" class="history-list"></div>
+    <div class="card">
+        <h2>Year-to-Date Totals</h2>
+        <div id="ytdContainer">
+            <div class="result-row"><span>Total Gross:</span> <span id="ytdGross">$0.00</span></div>
+            <div class="result-row"><span>Total Take-Home:</span> <span id="ytdNet">$0.00</span></div>
+        </div>
     </div>
 
-    <button class="btn-reset" onclick="resetAll()">Reset All Data</button>
+    <div id="history">
+        </div>
 </div>
 
 <script>
-    let data = JSON.parse(localStorage.getItem('payData')) || { tax: 0, invest: 0, vacation: 0, lastUpdate: 'Never', history: [] };
-    let lastEntryMemory = null;
-
-    updateUI();
+    const TAX_RATE = 0.34;
+    const INV_RATE = 0.064;
+    const VAC_RATE = 0.036;
 
     function calculate() {
-        const pay = parseFloat(document.getElementById('payInput').value);
-        if (isNaN(pay) || pay <= 0) return;
-
-        const t = pay * 0.36;
-        const i = pay * 0.044;
-        const v = pay * 0.036;
-        const net = pay - (t + i + v);
+        const gross = parseFloat(document.getElementById('grossPay').value) || 0;
         
-        const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        lastEntryMemory = { type: 'pay', t, i, v };
+        const tax = gross * TAX_RATE;
+        const inv = gross * INV_RATE;
+        const vac = gross * VAC_RATE;
+        const net = gross - (tax + inv + vac);
 
-        data.tax += t;
-        data.invest += i;
-        data.vacation += v;
-        data.lastUpdate = now;
+        document.getElementById('taxValue').innerText = `$${tax.toFixed(2)}`;
+        document.getElementById('invValue').innerText = `$${inv.toFixed(2)}`;
+        document.getElementById('vacValue').innerText = `$${vac.toFixed(2)}`;
+        document.getElementById('takeHomeValue').innerText = `$${net.toFixed(2)}`;
         
-        // Storing type and specific category data for deletions
-        data.history.unshift({ 
-            id: Date.now(), 
-            date: now, 
-            amount: pay, 
-            isAdj: false,
-            t: t, i: i, v: v 
-        });
-
-        document.getElementById('curTax').innerText = format(t);
-        document.getElementById('curInv').innerText = format(i);
-        document.getElementById('curVac').innerText = format(v);
-        document.getElementById('curTotal').innerText = format(t + i + v);
-        document.getElementById('curNet').innerText = format(net);
-        
-        document.getElementById('breakdownArea').style.display = 'block';
-        document.getElementById('undoBtn').style.display = 'block';
-        document.getElementById('payInput').value = '';
-
-        save();
+        return { gross, tax, inv, vac, net };
     }
 
-    function addManual() {
-        let amt = parseFloat(document.getElementById('adjAmt').value);
-        const cat = document.getElementById('adjCat').value;
-        const type = document.getElementById('adjType').value;
-        const catName = document.getElementById('adjCat').options[document.getElementById('adjCat').selectedIndex].text;
-        
-        if (isNaN(amt)) return;
-        if (type === 'minus') amt = -Math.abs(amt);
+    function saveEntry() {
+        const data = calculate();
+        if (data.gross <= 0) return;
 
-        const now = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        lastEntryMemory = { type: 'adj', cat: cat, amt: amt };
-
-        data[cat] += amt;
-        data.lastUpdate = now;
-        data.history.unshift({ 
+        const entry = {
             id: Date.now(),
-            date: now, 
-            amount: amt, 
-            isAdj: true, 
-            catLabel: catName,
-            catKey: cat
-        });
+            date: new Date().toLocaleDateString(),
+            ...data
+        };
 
-        document.getElementById('undoBtn').style.display = 'block';
-        document.getElementById('adjAmt').value = '';
-        save();
+        let history = JSON.parse(localStorage.getItem('payHistory')) || [];
+        history.unshift(entry);
+        localStorage.setItem('payHistory', JSON.stringify(history));
+        
+        document.getElementById('grossPay').value = '';
+        calculate();
+        renderHistory();
     }
 
     function deleteEntry(id) {
-        if (!confirm("Delete this entry and adjust YTD totals?")) return;
-        
-        const index = data.history.findIndex(item => item.id === id);
-        if (index === -1) return;
-        
-        const item = data.history[index];
-        
-        if (item.isAdj) {
-            data[item.catKey] -= item.amount;
-        } else {
-            data.tax -= item.t;
-            data.invest -= item.i;
-            data.vacation -= item.v;
-        }
-        
-        data.history.splice(index, 1);
-        save();
+        let history = JSON.parse(localStorage.getItem('payHistory')) || [];
+        history = history.filter(item => item.id !== id);
+        localStorage.setItem('payHistory', JSON.stringify(history));
+        renderHistory();
     }
 
-    function undoLast() {
-        if (!data.history.length) return;
-        const lastItem = data.history[0];
-        deleteEntry(lastItem.id);
-        document.getElementById('undoBtn').style.display = 'none';
-        document.getElementById('breakdownArea').style.display = 'none';
-    }
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem('payHistory')) || [];
+        const container = document.getElementById('history');
+        let ytdG = 0;
+        let ytdN = 0;
 
-    function save() {
-        localStorage.setItem('payData', JSON.stringify(data));
-        updateUI();
-    }
-
-    function updateUI() {
-        document.getElementById('totTax').innerText = format(data.tax);
-        document.getElementById('totInv').innerText = format(data.invest);
-        document.getElementById('totVac').innerText = format(data.vacation);
-        document.getElementById('lastDate').innerText = data.lastUpdate;
-
-        const listDiv = document.getElementById('historyList');
-        listDiv.innerHTML = '';
+        container.innerHTML = '<h3>History</h3>';
         
-        data.history.forEach(item => {
+        history.forEach(item => {
+            ytdG += item.gross;
+            ytdN += item.net;
+            
             const div = document.createElement('div');
             div.className = 'history-item';
-            
-            let content = `<div class="history-info"><span>${item.date}</span>`;
-            if (item.isAdj) {
-                const sign = item.amount >= 0 ? '+' : '';
-                content += `<span class="adj-log-text">Adj: ${item.catLabel} ${sign}${format(item.amount)}</span></div>`;
-            } else {
-                content += `<strong>${format(item.amount)}</strong></div>`;
-            }
-            
-            content += `<button class="btn-del" onclick="deleteEntry(${item.id})">×</button>`;
-            div.innerHTML = content;
-            listDiv.appendChild(div);
+            div.innerHTML = `
+                <div>
+                    <strong>${item.date}</strong><br>
+                    <small>Net: $${item.net.toFixed(2)}</small>
+                </div>
+                <button class="delete-btn" onclick="deleteEntry(${item.id})">Del</button>
+            `;
+            container.appendChild(div);
         });
+
+        document.getElementById('ytdGross').innerText = `$${ytdG.toFixed(2)}`;
+        document.getElementById('ytdNet').innerText = `$${ytdN.toFixed(2)}`;
     }
 
-    function format(num) {
-        return "$" + num.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-    }
-
-    function resetAll() {
-        if (confirm("Clear everything?")) {
-            localStorage.clear();
-            location.reload();
-        }
-    }
+    // Initialize
+    window.onload = renderHistory;
 </script>
+
 </body>
 </html>
